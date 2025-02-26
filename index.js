@@ -172,7 +172,7 @@ async function main() {
     {
       type: 'list',
       name: 'deployType',
-      message: 'Qual tipo de deploy você deseja?',
+      message: 'Which deployment type do you prefer?',
       choices: ['Self-Contained Class', 'Cancel']
     }
   ]);

@@ -1,6 +1,6 @@
 {
   "name": "create-woolball",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "description": "NPX templates",
   "main": "index.js",
