@@ -1,0 +1,29 @@
+{
+  "name": "create-woolball",
+  "version": "1.0.2",
+  "type": "module",
+  "description": "NPX templates",
+  "main": "index.js",
+  "bin": {
+    "create-woolball": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woolball-xyz/create-woolball.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/woolball-xyz/create-woolball/issues"
+  },
+  "homepage": "https://github.com/woolball-xyz/create-woolball#readme",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "figlet": "^1.7.0",
+    "inquirer": "^12.4.2"
+  }
+}
