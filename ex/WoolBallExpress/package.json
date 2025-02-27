@@ -1,0 +1,14 @@
+{
+  "name": "woolball-speech-to-text-express",
+  "version": "1.0.0",
+  "description": "WoolBall Speech-to-Text Express Server",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

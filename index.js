@@ -4,12 +4,91 @@ import fs from 'fs';
 import path from 'path';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import https from 'https';
 import figlet from 'figlet';
+import { fileURLToPath } from 'url';
+
+// Handlers
+import { handleSelfContained as handleDotnetSelfContained } from './handlers/dotnet/self-contained.js';
+import { handleMinimalApi as handleDotnetMinimalApi } from './handlers/dotnet/minimal-api.js';
+import { handleSelfContained as handleNodejsSelfContained } from './handlers/nodejs/self-contained.js';
+import { handleExpress } from './handlers/nodejs/express.js';
+import { handleNextJs } from './handlers/nodejs/nextjs.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const TEMPLATES = {
+  'SPEECH-TO-TEXT': {
+    DOTNET: {
+      'self-contained': {
+        files: {
+          service: 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/self-contained/WoolBallSpeechToTextWebService.cs',
+          usage: 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/self-contained/Usage.cs'
+        },
+        outputDir: './WoolBallWebServices'
+      },
+      'minimal-api': {
+        files: {
+          'Program.cs': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/minimal-api/Program.cs',
+          'minimal-api.csproj': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/minimal-api/minimal-api.csproj',
+          'appsettings.json': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/minimal-api/appsettings.json',
+          'WoolBallSpeechToTextWebService.cs': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/minimal-api/WoolBallSpeechToTextWebService.cs'
+        },
+        outputDir: './WoolBallMinimalApi'
+      }
+    },
+    NODEJS: {
+      'self-contained': {
+        files: {
+          'usage.js': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/nodejs/self-contained/usage.js',
+          'woolball-speech-to-text.js': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/nodejs/self-contained/woolball-speech-to-text.js'
+        },
+        outputDir: './WoolBallWebServices'
+      },
+      'express': {
+        files: {
+          'package.json': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/nodejs/express/package.json',
+          'server.js': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/nodejs/express/server.js',
+          'usage.js': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/nodejs/express/usage.js'
+        },
+        outputDir: './WoolBallExpress'
+      },
+      'nextjs': {
+        files: {
+          'app/api/speech-to-text/route.ts': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/nodejs/nextjs-api-route/route.ts',
+          'app/speech-to-text/page.tsx': 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/nodejs/nextjs-api-route/usage.tsx'
+        },
+        outputDir: '.'
+      }
+    }
+  }
+};
 
 
 // Função para encontrar arquivos
-async function downloadAndSetupTemplate() {
+async function downloadAndSetupTemplate(projectType) {
+  // Select technology stack
+  const { technology } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'technology',
+      message: 'Select your technology stack:',
+      choices: Object.keys(TEMPLATES[projectType])
+    }
+  ]);
+
+  // Select template type
+  const { template } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'template',
+      message: 'Select template type:',
+      choices: Object.keys(TEMPLATES[projectType][technology])
+    }
+  ]);
+
+  const templateConfig = TEMPLATES[projectType][technology][template];
+
   // Solicitar o token de forma segura
   const { bearerToken } = await inquirer.prompt([
     {
@@ -20,84 +99,55 @@ async function downloadAndSetupTemplate() {
     }
   ]);
 
-  const projectDir = './WoolBallWebServices';
-  const filePath = `${projectDir}/WoolBallSpeechToTextWebService.cs`;
-
-  // Verificar se o arquivo já existe
-  if (fs.existsSync(filePath)) {
+  // Verificar se o diretório de saída já existe
+  const outputDir = templateConfig.outputDir || './WoolBallWebServices';
+  if (fs.existsSync(outputDir)) {
     const { shouldOverwrite } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'shouldOverwrite',
-        message: 'The file already exists. Do you want to overwrite it?',
+        message: 'The directory already exists. Do you want to overwrite?',
         default: false
       }
     ]);
 
     if (!shouldOverwrite) {
-      console.log(chalk.yellow('\n⚠ Operation cancelled by user.'));
-      process.exit(0);
+      console.log(chalk.yellow('\n⚠ Operation canceled by user.'));
+        process.exit(0);
+        }
+  }
+
+  // Selecionar o handler apropriado
+  let handler;
+  if (technology === 'DOTNET') {
+    switch (template) {
+      case 'self-contained':
+        handler = handleDotnetSelfContained;
+        break;
+      case 'minimal-api':
+        handler = handleDotnetMinimalApi;
+        break;
+      default:
+        throw new Error(`Unsupported template: ${template}`);
+    }
+  } else if (technology === 'NODEJS') {
+    switch (template) {
+      case 'self-contained':
+        handler = handleNodejsSelfContained;
+        break;
+      case 'express':
+        handler = handleExpress;
+        break;
+      case 'nextjs':
+        handler = handleNextJs;
+        break;
+      default:
+        throw new Error(`Unsupported template: ${template}`);
     }
   }
-  const templateUrls = {
-    service: 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/self-contained/WoolBallSpeechToTextWebService.cs',
-    usage: 'https://raw.githubusercontent.com/woolball-xyz/woolball-templates/main/stt-template/dotnet/self-contained/Usage.cs'
-  };
-  
-  // Criar diretório se não existir
-  if (!fs.existsSync(projectDir)) {
-    fs.mkdirSync(projectDir, { recursive: true });
-  }
 
-  // Download both files
-  const downloadPromises = [
-    new Promise((resolve, reject) => {
-    https.get(templateUrls.service, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        // Substituir a chave da API
-        const updatedContent = data.replace('{{API_KEY}}', bearerToken);
-        
-        // Salvar o arquivo
-        fs.writeFileSync(filePath, updatedContent);
-        resolve(filePath);
-      });
-    }).on('error', (err) => {
-      console.error(chalk.red('✖ Error downloading service template:', err.message));
-      reject(err);
-    });
-  }),
-  new Promise((resolve, reject) => {
-    const usageFilePath = `${projectDir}/Usage.cs`;
-    https.get(templateUrls.usage, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      res.on('end', () => {
-        // Salvar o arquivo
-        fs.writeFileSync(usageFilePath, data);
-        resolve(usageFilePath);
-      });
-    }).on('error', (err) => {
-      console.error(chalk.red('✖ Error downloading usage template:', err.message));
-      reject(err);
-    });
-  })
-];
-
-return Promise.all(downloadPromises).then(([servicePath, usagePath]) => {
-    console.log(chalk.green('Files created at:'));
-    console.log(chalk.blue(`- ${servicePath}`));
-    console.log(chalk.blue(`- ${usagePath}`));
-  });
+  // Executar o handler
+  return handler(templateConfig, bearerToken);
 }
 
 function findFiles(directory, target) {
@@ -144,50 +194,22 @@ async function main() {
     {
       type: 'list',
       name: 'projectType',
-      message: 'Create a file to use WoolBall API in your project.',
-      choices: ['SPEECH-TO-TEXT', 'Cancelar']
+      message: 'What feature do you want to implement?',
+      choices: [...Object.keys(TEMPLATES), 'Cancel']
     }
   ]);
 
-  if (projectType !== 'SPEECH-TO-TEXT') {
+  if (projectType === 'Cancel') {
     console.log('bye.');
     return;
   }
 
-  const { framework } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'framework',
-      message: 'Which technology do we go use?',
-      choices: ['.NET', 'Cancel']
-    }
-  ]);
-
-  if (framework !== '.NET') {
-    console.log('bye.');
-    return;
-  }
-
-  const { deployType } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'deployType',
-      message: 'Which deployment type do you prefer?',
-      choices: ['Self-Contained Class', 'Cancel']
-    }
-  ]);
-
-  if (deployType !== 'Self-Contained Class') {
-    console.log('bye.');
-    return;
-  }
-
-  console.log(`\nObtenha sua chave em: ${chalk.blue.underline('https://woolball.xyz/api-keys')}`);
-  console.log('\nBaixando template do Woolball...');
+  console.log(`\nGet your key at: ${chalk.blue.underline('https://woolball.xyz/Identity/Account/Manage/')}`);
+  console.log('\nDownloading Woolball template...');
   try {
-    await downloadAndSetupTemplate();
+    await downloadAndSetupTemplate(projectType);
   } catch (error) {
-    console.error(chalk.red('\n✗ Erro ao baixar o template:'), error.message);
+    console.error(chalk.red('\n✗ Error downloading template:'), error.message);
   }
 }
 
