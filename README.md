@@ -1,2 +1,9 @@
 # create-woolball
-NPX templates
+NPX templates for Woolball API
+
+![](assets/demo.mov)
+## Usage
+```bash
+npx create-woolball
+```
+
