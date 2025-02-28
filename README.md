@@ -1,5 +1,5 @@
 # create-woolball
-NPX handler for Woolball API templates
+NPX handler for Woolball API templates (https://github.com/woolball-xyz/woolball-templates)
 
 ## Usage
 ```bash
