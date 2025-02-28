@@ -1,7 +1,7 @@
 # create-woolball
 NPX templates for Woolball API
 
-![](assets/demo.mov)
+![](assets/demo.gif)
 ## Usage
 ```bash
 npx create-woolball
