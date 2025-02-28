@@ -8,3 +8,6 @@ npx create-woolball
 
 ![](assets/demo.gif)
 
+---
+
+[Discord](https://discord.gg/xbSmMfmwWW)
