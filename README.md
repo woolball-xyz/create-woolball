@@ -1,9 +1,10 @@
 # create-woolball
-NPX templates for Woolball API
+NPX handler for Woolball API templates
 
-![](assets/demo.gif)
 ## Usage
 ```bash
 npx create-woolball
 ```
+
+![](assets/demo.gif)
 
